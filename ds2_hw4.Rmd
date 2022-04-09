@@ -63,6 +63,15 @@ x_test = model.matrix(outstate ~ ., test_df)[ , -1]
 y_test = test_df$outstate
 ```
 
+```{r}
+# data dimension and summary
+dim(train_df)
+
+summary(train_df)
+```
+
+There are 453 rows and 17 columns in training data, all the variables are numeric.
+
 
 (a) Build a regression tree on the training data to predict the response. Create a plot of the tree.
 
@@ -87,5 +96,37 @@ reg_tree_prune = prune(reg_tree,
                        cp = reg_tree_cptable[min_err,1])
 
 #summary(reg_tree_prune) 
+```
+
+(b) Perform random forest on the training data. Report the variable importance and the test error.
+
+```{r}
+set.seed(0409)
+
+ctrl = trainControl(method = "cv")
+
+rf_grid = expand.grid(mtry = seq(1, 16, 3),
+                      splitrule = "variance",
+                      min.node.size = 1:8)
+
+rf_fit = train(outstate ~ .,
+               data = train_df,
+               method = "ranger",
+               tuneGrid = rf_grid,
+               trControl = ctrl)
+
+ggplot(rf_fit, highlight = TRUE)
+```
+
+
+
+
+
+## Question 2
+
+(b) Perform boosting on the training data and report the variable importance. What is the test error rate?
+
+```{r}
+
 ```
 
