@@ -121,7 +121,7 @@ ctrl = trainControl(method = "cv")
 
 rf_grid = expand.grid(mtry = seq(1, 16, 3),
                       splitrule = "variance",
-                      min.node.size = 1:8)
+                      min.node.size = 1:12)
 
 rf_fit = train(outstate ~ .,
                data = train_df,
