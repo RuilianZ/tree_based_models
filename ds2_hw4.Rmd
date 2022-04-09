@@ -67,6 +67,25 @@ y_test = test_df$outstate
 (a) Build a regression tree on the training data to predict the response. Create a plot of the tree.
 
 ```{r}
+set.seed(0409)
 
+reg_tree = rpart(formula = outstate ~ . ,
+                 data = train_df,
+                 control = rpart.control(cp = 0)) 
+
+# cp table
+reg_tree_cptable = reg_tree$cptable
+
+# cross-validation plot
+plotcp(reg_tree)
+
+# minimum cross_validation error
+min_err = which.min(reg_tree_cptable[,4])
+
+# pruning
+reg_tree_prune = prune(reg_tree, 
+                       cp = reg_tree_cptable[min_err,1])
+
+#summary(reg_tree_prune) 
 ```
 
