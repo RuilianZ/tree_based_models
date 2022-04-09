@@ -98,6 +98,16 @@ reg_tree_prune = prune(reg_tree,
 #summary(reg_tree_prune) 
 ```
 
+```{r}
+# make prediction
+reg_tree_pred = predict(reg_tree_prune, newdata = test_df)
+
+head(reg_tree_pred)
+
+RMSE(reg_tree_pred, test_df$outstate)
+```
+
+
 (b) Perform random forest on the training data. Report the variable importance and the test error.
 
 ```{r}
@@ -115,10 +125,42 @@ rf_fit = train(outstate ~ .,
                tuneGrid = rf_grid,
                trControl = ctrl)
 
+rf_fit$bestTune
+
 ggplot(rf_fit, highlight = TRUE)
 ```
 
+```{r}
+set.seed(0409)
 
+# extract variable importance using permutation
+rf_per = ranger(outstate ~ . , 
+                data = train_df,
+                mtry = rf_fit$bestTune[[1]],
+                splitrule = "variance",
+                min.node.size = rf_fit$bestTune[[3]],
+                importance = "permutation",
+                scale.permutation.importance = TRUE)
+
+# variable importance
+barplot(sort(ranger::importance(rf_per), decreasing = FALSE), 
+        las = 2, horiz = TRUE, cex.names = 0.7, 
+        col = colorRampPalette(colors = c("cyan", "blue"))(19))
+```
+
+```{r}
+# make prediction
+rf_pred = predict(rf_fit, newdata = test_df)
+
+RMSE(rf_pred, test_df$outstate)
+```
+
+
+(c) Perform boosting on the training data. Report the variable importance and the test error.
+
+```{r}
+
+```
 
 
 

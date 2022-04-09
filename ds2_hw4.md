@@ -111,6 +111,22 @@ reg_tree_prune = prune(reg_tree,
 #summary(reg_tree_prune) 
 ```
 
+``` r
+# make prediction
+reg_tree_pred = predict(reg_tree_prune, newdata = test_df)
+
+head(reg_tree_pred)
+```
+
+    ##         1         2         3         4         5         6 
+    ## 12702.934  7875.794 11145.372 14950.897  8659.818 12702.934
+
+``` r
+RMSE(reg_tree_pred, test_df$outstate)
+```
+
+    ## [1] 2239.096
+
 2.  Perform random forest on the training data. Report the variable
     importance and the test error.
 
@@ -129,10 +145,49 @@ rf_fit = train(outstate ~ .,
                tuneGrid = rf_grid,
                trControl = ctrl)
 
+rf_fit$bestTune
+```
+
+    ##    mtry splitrule min.node.size
+    ## 38   10  variance             2
+
+``` r
 ggplot(rf_fit, highlight = TRUE)
 ```
 
-<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-4-1.png" width="90%" style="display: block; margin: auto;" />
+<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-5-1.png" width="90%" style="display: block; margin: auto;" />
+
+``` r
+set.seed(0409)
+
+# extract variable importance using permutation
+rf_per = ranger(outstate ~ . , 
+                data = train_df,
+                mtry = rf_fit$bestTune[[1]],
+                splitrule = "variance",
+                min.node.size = rf_fit$bestTune[[3]],
+                importance = "permutation",
+                scale.permutation.importance = TRUE)
+
+# variable importance
+barplot(sort(ranger::importance(rf_per), decreasing = FALSE), 
+        las = 2, horiz = TRUE, cex.names = 0.7, 
+        col = colorRampPalette(colors = c("cyan", "blue"))(19))
+```
+
+<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-6-1.png" width="90%" style="display: block; margin: auto;" />
+
+``` r
+# make prediction
+rf_pred = predict(rf_fit, newdata = test_df)
+
+RMSE(rf_pred, test_df$outstate)
+```
+
+    ## [1] 1785.281
+
+3.  Perform boosting on the training data. Report the variable
+    importance and the test error.
 
 ## Question 2
 
