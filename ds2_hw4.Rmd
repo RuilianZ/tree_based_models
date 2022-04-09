@@ -5,3 +5,37 @@ date: "4/1/2022"
 output: github_document
 ---
 
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(viridis)
+library(caret)
+library(GGally)
+library(gridExtra)
+library(pROC)
+library(ISLR)
+library(rpart) # CART algorithm - Classification And Regression Trees
+library(rpart.plot) # visualization
+library(party) # CIT - Conditional Inference Tree
+library(partykit) # plotting
+library(randomForest)
+library(ranger)
+library(gbm)
+
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, 
+                      fig.align = "center", cache = TRUE, 
+                      fig.width = 6, fig.asp = 0.6, out.width = "90%")
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+
+## Question 1
+
+(a) Build a regression tree on the training data to predict the response. Create a plot of the tree.
+
