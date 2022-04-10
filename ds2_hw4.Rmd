@@ -56,12 +56,6 @@ indexTrain = createDataPartition(y = df$outstate,
 
 train_df = df[indexTrain, ]
 test_df = df[-indexTrain, ]
-
-x_train = model.matrix(outstate ~ ., train_df)[ , -1]
-y_train = train_df$outstate
-
-x_test = model.matrix(outstate ~ ., test_df)[ , -1]
-y_test = test_df$outstate
 ```
 
 ```{r}
@@ -74,7 +68,7 @@ summary(train_df)
 There are 453 rows and 17 columns in training data, all the variables are numeric.
 
 
-### (a) Build a regression tree on the training data to predict the response. Create a plot of the tree.
+**(a) Build a regression tree on the training data to predict the response. Create a plot of the tree.**
 
 ```{r}
 set.seed(0409)
@@ -109,7 +103,7 @@ RMSE(reg_tree_pred, test_df$outstate)
 ```
 
 
-(b) Perform random forest on the training data. Report the variable importance and the test error.
+**(b) Perform random forest on the training data. Report the variable importance and the test error.**
 
 ```{r}
 set.seed(0409)
@@ -190,7 +184,7 @@ RMSE(rf_grid_pred, test_df$outstate)
 ```
 
 
-### (c) Perform boosting on the training data. Report the variable importance and the test error.
+**(c) Perform boosting on the training data. Report the variable importance and the test error.**
 
 ```{r}
 set.seed(0409)
@@ -242,9 +236,41 @@ RMSE(boost_pred, test_df$outstate)
 
 * The test error is `r RMSE(boost_pred, test_df$outstate)`, which is smaller than the test error `r RMSE(rf_grid_pred, test_df$outstate)` from the tuned model from caret.
 
+
+
 ## Question 2
 
-### (b) Perform boosting on the training data and report the variable importance. What is the test error rate?
+```{r}
+set.seed(0409)
+
+# data import and cleaning
+data(OJ)
+
+OJ_df = OJ %>% 
+  janitor::clean_names() %>% 
+  relocate("purchase", .after = "store") %>% 
+  mutate(purchase = as.factor(purchase)) %>% 
+  na.omit()
+
+dim(OJ_df)
+
+summary(OJ_df)
+```
+
+```{r}
+# data partition
+OJ_indexTrain = createDataPartition(y = OJ_df$purchase,
+                                 p = 0.653,
+                                 list = FALSE)
+
+OJ_train_df = OJ_df[OJ_indexTrain, ]
+OJ_test_df = OJ_df[-OJ_indexTrain, ]
+```
+
+
+**(a) Build a classification tree using the training data, with Purchase as the response and the other variables as predictors. Use cross-validation to determine the tree size and create a plot of the final tree. Which tree size corresponds to the lowest cross-validation error? Is this the same as the tree size obtained using the 1 SE rule?**
+
+**(b) Perform boosting on the training data and report the variable importance. What is the test error rate?**
 
 ```{r}
 

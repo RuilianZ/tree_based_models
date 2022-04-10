@@ -23,12 +23,6 @@ indexTrain = createDataPartition(y = df$outstate,
 
 train_df = df[indexTrain, ]
 test_df = df[-indexTrain, ]
-
-x_train = model.matrix(outstate ~ ., train_df)[ , -1]
-y_train = train_df$outstate
-
-x_test = model.matrix(outstate ~ ., test_df)[ , -1]
-y_test = test_df$outstate
 ```
 
 ``` r
@@ -81,7 +75,8 @@ summary(train_df)
 There are 453 rows and 17 columns in training data, all the variables
 are numeric.
 
-### (a) Build a regression tree on the training data to predict the response. Create a plot of the tree.
+**(a) Build a regression tree on the training data to predict the
+response. Create a plot of the tree.**
 
 ``` r
 set.seed(0409)
@@ -126,8 +121,8 @@ RMSE(reg_tree_pred, test_df$outstate)
 
     ## [1] 2239.096
 
-2.  Perform random forest on the training data. Report the variable
-    importance and the test error.
+**(b) Perform random forest on the training data. Report the variable
+importance and the test error.**
 
 ``` r
 set.seed(0409)
@@ -224,7 +219,8 @@ RMSE(rf_grid_pred, test_df$outstate)
 
     ## [1] 1785.281
 
-### (c) Perform boosting on the training data. Report the variable importance and the test error.
+**(c) Perform boosting on the training data. Report the variable
+importance and the test error.**
 
 ``` r
 set.seed(0409)
@@ -346,4 +342,71 @@ RMSE(boost_pred, test_df$outstate)
 
 ## Question 2
 
-### (b) Perform boosting on the training data and report the variable importance. What is the test error rate?
+``` r
+set.seed(0409)
+
+# data import and cleaning
+data(OJ)
+
+OJ_df = OJ %>% 
+  janitor::clean_names() %>% 
+  relocate("purchase", .after = "store") %>% 
+  mutate(purchase = as.factor(purchase)) %>% 
+  na.omit()
+
+dim(OJ_df)
+```
+
+    ## [1] 1070   18
+
+``` r
+summary(OJ_df)
+```
+
+    ##  weekof_purchase    store_id       price_ch        price_mm    
+    ##  Min.   :227.0   Min.   :1.00   Min.   :1.690   Min.   :1.690  
+    ##  1st Qu.:240.0   1st Qu.:2.00   1st Qu.:1.790   1st Qu.:1.990  
+    ##  Median :257.0   Median :3.00   Median :1.860   Median :2.090  
+    ##  Mean   :254.4   Mean   :3.96   Mean   :1.867   Mean   :2.085  
+    ##  3rd Qu.:268.0   3rd Qu.:7.00   3rd Qu.:1.990   3rd Qu.:2.180  
+    ##  Max.   :278.0   Max.   :7.00   Max.   :2.090   Max.   :2.290  
+    ##     disc_ch           disc_mm         special_ch       special_mm    
+    ##  Min.   :0.00000   Min.   :0.0000   Min.   :0.0000   Min.   :0.0000  
+    ##  1st Qu.:0.00000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000  
+    ##  Median :0.00000   Median :0.0000   Median :0.0000   Median :0.0000  
+    ##  Mean   :0.05186   Mean   :0.1234   Mean   :0.1477   Mean   :0.1617  
+    ##  3rd Qu.:0.00000   3rd Qu.:0.2300   3rd Qu.:0.0000   3rd Qu.:0.0000  
+    ##  Max.   :0.50000   Max.   :0.8000   Max.   :1.0000   Max.   :1.0000  
+    ##     loyal_ch        sale_price_mm   sale_price_ch     price_diff      store7   
+    ##  Min.   :0.000011   Min.   :1.190   Min.   :1.390   Min.   :-0.6700   No :714  
+    ##  1st Qu.:0.325257   1st Qu.:1.690   1st Qu.:1.750   1st Qu.: 0.0000   Yes:356  
+    ##  Median :0.600000   Median :2.090   Median :1.860   Median : 0.2300            
+    ##  Mean   :0.565782   Mean   :1.962   Mean   :1.816   Mean   : 0.1465            
+    ##  3rd Qu.:0.850873   3rd Qu.:2.130   3rd Qu.:1.890   3rd Qu.: 0.3200            
+    ##  Max.   :0.999947   Max.   :2.290   Max.   :2.090   Max.   : 0.6400            
+    ##   pct_disc_mm      pct_disc_ch      list_price_diff     store       purchase
+    ##  Min.   :0.0000   Min.   :0.00000   Min.   :0.000   Min.   :0.000   CH:653  
+    ##  1st Qu.:0.0000   1st Qu.:0.00000   1st Qu.:0.140   1st Qu.:0.000   MM:417  
+    ##  Median :0.0000   Median :0.00000   Median :0.240   Median :2.000           
+    ##  Mean   :0.0593   Mean   :0.02731   Mean   :0.218   Mean   :1.631           
+    ##  3rd Qu.:0.1127   3rd Qu.:0.00000   3rd Qu.:0.300   3rd Qu.:3.000           
+    ##  Max.   :0.4020   Max.   :0.25269   Max.   :0.440   Max.   :4.000
+
+``` r
+# data partition
+OJ_indexTrain = createDataPartition(y = OJ_df$purchase,
+                                 p = 0.653,
+                                 list = FALSE)
+
+OJ_train_df = OJ_df[OJ_indexTrain, ]
+OJ_test_df = OJ_df[-OJ_indexTrain, ]
+```
+
+**(a) Build a classification tree using the training data, with Purchase
+as the response and the other variables as predictors. Use
+cross-validation to determine the tree size and create a plot of the
+final tree. Which tree size corresponds to the lowest cross-validation
+error? Is this the same as the tree size obtained using the 1 SE rule?**
+
+**(b) Perform boosting on the training data and report the variable
+importance. What is the test error rate?**
