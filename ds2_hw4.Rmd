@@ -74,7 +74,7 @@ summary(train_df)
 There are 453 rows and 17 columns in training data, all the variables are numeric.
 
 
-(a) Build a regression tree on the training data to predict the response. Create a plot of the tree.
+### (a) Build a regression tree on the training data to predict the response. Create a plot of the tree.
 
 ```{r}
 set.seed(0409)
@@ -190,7 +190,7 @@ RMSE(rf_grid_pred, test_df$outstate)
 ```
 
 
-(c) Perform boosting on the training data. Report the variable importance and the test error.
+### (c) Perform boosting on the training data. Report the variable importance and the test error.
 
 ```{r}
 set.seed(0409)
@@ -207,27 +207,33 @@ boost = gbm(outstate ~ .,
 
 # plot loss function as a result of number of trees added to the ensemble
 gbm.perf(boost, method = "cv")
+
+best.iter = 1669
+
+# check performance using the out-of-bag (OOB) error
+# the OOB error typically underestimates the optimal number of iterations
+gbm.perf(boost, method = "OOB")
 ```
 
 * The green curve represents the cross-validation error, and the black curve represents the training error.   
-* The best cross-validation iteration was 1791, as is shown by the vertical dash line.
+* The best cross-validation iteration was `r best.iter`, as is shown by the vertical dash line.
 
 ```{r}
 # plot relative influence of each variable
 par(mfrow = c(1, 2))
 summary(boost, n.trees = 1) # using first tree
-summary(boost, n.trees = 1791) # using estimated best number of trees
+summary(boost, n.trees = best.iter) # using estimated best number of trees
 ```
 
 * The left plot shows the variable influence of the first tree, the right plot shows the variable influence of the estimated best number of trees.  
-* `expend`, `grad_rate`, `f_undergrad`, `top25perc`, and `enroll` are important variables.
+* `expend`, `apps`, `ph_d`, `top10perc`, and `books` are important variables, which are consistent with the variable importance in caret.
 
 ```{r}
 # predict on the new data using the "best" number of trees
 # by default, predictions will be on the link scale
 boost_pred = predict(boost,
                      newdata = test_df,
-                     n.trees = 1791,
+                     n.trees = best.iter,
                      type = "link")
 
 # test error
@@ -238,7 +244,7 @@ RMSE(boost_pred, test_df$outstate)
 
 ## Question 2
 
-(b) Perform boosting on the training data and report the variable importance. What is the test error rate?
+### (b) Perform boosting on the training data and report the variable importance. What is the test error rate?
 
 ```{r}
 
