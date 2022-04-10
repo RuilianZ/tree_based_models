@@ -133,29 +133,67 @@ RMSE(reg_tree_pred, test_df$outstate)
 ``` r
 set.seed(0409)
 
+# using randomForest
+rf = randomForest(outstate ~ .,
+                  data = train_df,
+                  mtry = 6)
+
+rf_pred = predict(rf, newdata = test_df)
+
+RMSE(rf_pred, test_df$outstate)
+```
+
+    ## [1] 1733.612
+
+``` r
+set.seed(0409)
+
+# fast implementation using ranger
+rf2 = ranger(outstate ~ .,
+             data = train_df,
+             mtry = 6)
+
+rf2_pred = predict(rf2, data = test_df)$predictions
+
+# test error
+RMSE(rf2_pred, test_df$outstate)
+```
+
+    ## [1] 1724.522
+
+-   The function `randomForest()` implements Breiman’s random forest
+    algorithm. The test error is 1733.6117039.  
+-   `ranger()` is a fast implementation of the algorithm above,
+    particularly suit for high dimentional data. The test error is
+    1724.5216241.
+
+``` r
+set.seed(0409)
+
+# train random forest model using caret
 ctrl = trainControl(method = "cv")
 
 rf_grid = expand.grid(mtry = seq(1, 16, 3),
                       splitrule = "variance",
                       min.node.size = 1:12)
 
-rf_fit = train(outstate ~ .,
+rf_grid_fit = train(outstate ~ .,
                data = train_df,
                method = "ranger",
                tuneGrid = rf_grid,
                trControl = ctrl)
 
-rf_fit$bestTune
+rf_grid_fit$bestTune
 ```
 
     ##    mtry splitrule min.node.size
     ## 38   10  variance             2
 
 ``` r
-ggplot(rf_fit, highlight = TRUE)
+ggplot(rf_grid_fit, highlight = TRUE)
 ```
 
-<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-5-1.png" style="display: block; margin: auto;" />
+<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-7-1.png" style="display: block; margin: auto;" />
 
 ``` r
 set.seed(0409)
@@ -163,9 +201,9 @@ set.seed(0409)
 # extract variable importance using permutation
 rf_per = ranger(outstate ~ . , 
                 data = train_df,
-                mtry = rf_fit$bestTune[[1]],
+                mtry = rf_grid_fit$bestTune[[1]],
                 splitrule = "variance",
-                min.node.size = rf_fit$bestTune[[3]],
+                min.node.size = rf_grid_fit$bestTune[[3]],
                 importance = "permutation",
                 scale.permutation.importance = TRUE)
 
@@ -175,19 +213,117 @@ barplot(sort(ranger::importance(rf_per), decreasing = FALSE),
         col = colorRampPalette(colors = c("cyan", "blue"))(19))
 ```
 
-<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-6-1.png" style="display: block; margin: auto;" />
+<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-8-1.png" style="display: block; margin: auto;" />
 
 ``` r
 # make prediction
-rf_pred = predict(rf_fit, newdata = test_df)
+rf_grid_pred = predict(rf_grid_fit, newdata = test_df)
 
-RMSE(rf_pred, test_df$outstate)
+# test error
+RMSE(rf_grid_pred, test_df$outstate)
 ```
 
     ## [1] 1785.281
 
 3.  Perform boosting on the training data. Report the variable
     importance and the test error.
+
+``` r
+set.seed(0409)
+
+# fit a gradient boosting model with Gaussian loss function
+boost = gbm(outstate ~ .,
+            data = train_df,
+            distribution = "gaussian",
+            n.trees = 2000,
+            interaction.depth = 3,
+            shrinkage = 0.005,
+            cv.folds = 10,
+            n.cores = 2)
+
+# plot loss function as a result of number of trees added to the ensemble
+gbm.perf(boost, method = "cv")
+```
+
+<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-10-1.png" style="display: block; margin: auto;" />
+
+    ## [1] 1669
+
+-   The green curve represents the cross-validation error, and the black
+    curve represents the training error.  
+-   The best cross-validation iteration was 1791, as is shown by the
+    vertical dash line.
+
+``` r
+# plot relative influence of each variable
+par(mfrow = c(1, 2))
+summary(boost, n.trees = 1) # using first tree
+```
+
+    ##                     var   rel.inf
+    ## expend           expend 92.030971
+    ## top10perc     top10perc  7.969029
+    ## apps               apps  0.000000
+    ## accept           accept  0.000000
+    ## enroll           enroll  0.000000
+    ## top25perc     top25perc  0.000000
+    ## f_undergrad f_undergrad  0.000000
+    ## p_undergrad p_undergrad  0.000000
+    ## room_board   room_board  0.000000
+    ## books             books  0.000000
+    ## personal       personal  0.000000
+    ## ph_d               ph_d  0.000000
+    ## terminal       terminal  0.000000
+    ## s_f_ratio     s_f_ratio  0.000000
+    ## perc_alumni perc_alumni  0.000000
+    ## grad_rate     grad_rate  0.000000
+
+``` r
+summary(boost, n.trees = 1791) # using estimated best number of trees
+```
+
+<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-11-1.png" style="display: block; margin: auto;" />
+
+    ##                     var    rel.inf
+    ## expend           expend 57.0351239
+    ## room_board   room_board 11.5656005
+    ## perc_alumni perc_alumni  3.8201769
+    ## grad_rate     grad_rate  3.6774388
+    ## apps               apps  3.6189651
+    ## accept           accept  3.1225999
+    ## terminal       terminal  3.0358868
+    ## ph_d               ph_d  2.5800617
+    ## f_undergrad f_undergrad  2.1136634
+    ## personal       personal  1.8427452
+    ## s_f_ratio     s_f_ratio  1.6453064
+    ## top10perc     top10perc  1.4478907
+    ## p_undergrad p_undergrad  1.2841624
+    ## top25perc     top25perc  1.2701744
+    ## enroll           enroll  1.0674367
+    ## books             books  0.8727672
+
+-   The left plot shows the variable influence of the first tree, the
+    right plot shows the variable influence of the estimated best number
+    of trees.  
+-   `expend`, `grad_rate`, `f_undergrad`, `top25perc`, and `enroll` are
+    important variables.
+
+``` r
+# predict on the new data using the "best" number of trees
+# by default, predictions will be on the link scale
+boost_pred = predict(boost,
+                     newdata = test_df,
+                     n.trees = 1791,
+                     type = "link")
+
+# test error
+RMSE(boost_pred, test_df$outstate)
+```
+
+    ## [1] 1713.571
+
+-   The test error is 1713.5712628, which is smaller than the test error
+    1785.2810445 from the tuned model from caret.
 
 ## Question 2
 

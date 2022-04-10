@@ -114,21 +114,53 @@ RMSE(reg_tree_pred, test_df$outstate)
 ```{r}
 set.seed(0409)
 
+# using randomForest
+rf = randomForest(outstate ~ .,
+                  data = train_df,
+                  mtry = 6)
+
+rf_pred = predict(rf, newdata = test_df)
+
+RMSE(rf_pred, test_df$outstate)
+```
+
+```{r}
+set.seed(0409)
+
+# fast implementation using ranger
+rf2 = ranger(outstate ~ .,
+             data = train_df,
+             mtry = 6)
+
+rf2_pred = predict(rf2, data = test_df)$predictions
+
+# test error
+RMSE(rf2_pred, test_df$outstate)
+```
+
+* The function `randomForest()` implements Breiman's random forest algorithm. The test error is `r RMSE(rf_pred, test_df$outstate)`.  
+* `ranger()` is a fast implementation of the algorithm above, particularly suit for high dimentional data. The test error is `r RMSE(rf2_pred, test_df$outstate)`.
+
+
+```{r}
+set.seed(0409)
+
+# train random forest model using caret
 ctrl = trainControl(method = "cv")
 
 rf_grid = expand.grid(mtry = seq(1, 16, 3),
                       splitrule = "variance",
                       min.node.size = 1:12)
 
-rf_fit = train(outstate ~ .,
+rf_grid_fit = train(outstate ~ .,
                data = train_df,
                method = "ranger",
                tuneGrid = rf_grid,
                trControl = ctrl)
 
-rf_fit$bestTune
+rf_grid_fit$bestTune
 
-ggplot(rf_fit, highlight = TRUE)
+ggplot(rf_grid_fit, highlight = TRUE)
 ```
 
 ```{r}
@@ -137,9 +169,9 @@ set.seed(0409)
 # extract variable importance using permutation
 rf_per = ranger(outstate ~ . , 
                 data = train_df,
-                mtry = rf_fit$bestTune[[1]],
+                mtry = rf_grid_fit$bestTune[[1]],
                 splitrule = "variance",
-                min.node.size = rf_fit$bestTune[[3]],
+                min.node.size = rf_grid_fit$bestTune[[3]],
                 importance = "permutation",
                 scale.permutation.importance = TRUE)
 
@@ -151,19 +183,58 @@ barplot(sort(ranger::importance(rf_per), decreasing = FALSE),
 
 ```{r}
 # make prediction
-rf_pred = predict(rf_fit, newdata = test_df)
+rf_grid_pred = predict(rf_grid_fit, newdata = test_df)
 
-RMSE(rf_pred, test_df$outstate)
+# test error
+RMSE(rf_grid_pred, test_df$outstate)
 ```
 
 
 (c) Perform boosting on the training data. Report the variable importance and the test error.
 
 ```{r}
+set.seed(0409)
 
+# fit a gradient boosting model with Gaussian loss function
+boost = gbm(outstate ~ .,
+            data = train_df,
+            distribution = "gaussian",
+            n.trees = 2000,
+            interaction.depth = 3,
+            shrinkage = 0.005,
+            cv.folds = 10,
+            n.cores = 2)
+
+# plot loss function as a result of number of trees added to the ensemble
+gbm.perf(boost, method = "cv")
 ```
 
+* The green curve represents the cross-validation error, and the black curve represents the training error.   
+* The best cross-validation iteration was 1791, as is shown by the vertical dash line.
 
+```{r}
+# plot relative influence of each variable
+par(mfrow = c(1, 2))
+summary(boost, n.trees = 1) # using first tree
+summary(boost, n.trees = 1791) # using estimated best number of trees
+```
+
+* The left plot shows the variable influence of the first tree, the right plot shows the variable influence of the estimated best number of trees.  
+* `expend`, `grad_rate`, `f_undergrad`, `top25perc`, and `enroll` are important variables.
+
+```{r}
+# predict on the new data using the "best" number of trees
+# by default, predictions will be on the link scale
+boost_pred = predict(boost,
+                     newdata = test_df,
+                     n.trees = 1791,
+                     type = "link")
+
+# test error
+RMSE(boost_pred, test_df$outstate)
+```
+
+* The test error is `r RMSE(boost_pred, test_df$outstate)`, which is smaller than the test error `r RMSE(rf_grid_pred, test_df$outstate)` from the tuned model from caret.
 
 ## Question 2
 
