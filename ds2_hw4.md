@@ -343,8 +343,6 @@ RMSE(boost_pred, test_df$outstate)
 ## Question 2
 
 ``` r
-set.seed(0409)
-
 # data import and cleaning
 data(OJ)
 
@@ -393,6 +391,8 @@ summary(OJ_df)
     ##  Max.   :0.4020   Max.   :0.25269   Max.   :0.440   Max.   :4.000
 
 ``` r
+set.seed(0409)
+
 # data partition
 OJ_indexTrain = createDataPartition(y = OJ_df$purchase,
                                  p = 0.653,
@@ -407,6 +407,81 @@ as the response and the other variables as predictors. Use
 cross-validation to determine the tree size and create a plot of the
 final tree. Which tree size corresponds to the lowest cross-validation
 error? Is this the same as the tree size obtained using the 1 SE rule?**
+
+**Min MSE rule:**
+
+``` r
+set.seed(0409)
+
+# fit classification model using rpart
+class_tree = rpart(purchase ~ . , 
+                   data = OJ_train_df,
+                   control = rpart.control(cp = 0))
+
+# tract cp table
+OJ_cp_table = printcp(class_tree)
+```
+
+    ## 
+    ## Classification tree:
+    ## rpart(formula = purchase ~ ., data = OJ_train_df, control = rpart.control(cp = 0))
+    ## 
+    ## Variables actually used in tree construction:
+    ## [1] disc_ch         list_price_diff loyal_ch        price_ch       
+    ## [5] price_diff      store_id       
+    ## 
+    ## Root node error: 273/700 = 0.39
+    ## 
+    ## n= 700 
+    ## 
+    ##          CP nsplit rel error  xerror     xstd
+    ## 1 0.4542125      0   1.00000 1.00000 0.047270
+    ## 2 0.0293040      1   0.54579 0.58974 0.040785
+    ## 3 0.0256410      3   0.48718 0.56410 0.040146
+    ## 4 0.0128205      4   0.46154 0.51648 0.038869
+    ## 5 0.0073260     11   0.36264 0.49451 0.038237
+    ## 6 0.0036630     12   0.35531 0.49451 0.038237
+    ## 7 0.0018315     13   0.35165 0.49084 0.038128
+    ## 8 0.0000000     17   0.34432 0.50549 0.038556
+
+``` r
+# extract min MSE
+OJ_min_MSE = which.min(OJ_cp_table[ , 4])
+
+# plot cross-validation error agiainst cp
+plotcp(class_tree)
+```
+
+<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-15-1.png" style="display: block; margin: auto;" />
+
+``` r
+# obtain final tree using min MSE
+cp_MSE = OJ_cp_table[OJ_min_MSE, 1]
+
+class_tree_prune = prune(class_tree, cp = cp_MSE)
+
+# plot final tree
+rpart.plot(class_tree_prune)
+```
+
+<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-15-2.png" style="display: block; margin: auto;" />
+
+**1 SE rule:**
+
+``` r
+set.seed(0409)
+
+# obtain final tree using 1SE
+cp_1SE = OJ_cp_table[OJ_cp_table[ , 4] < OJ_cp_table[OJ_min_MSE, 4] + OJ_cp_table[OJ_min_MSE, 5], 1][1]
+
+class_tree_prune_1SE = prune(class_tree, 
+                             cp = cp_1SE)
+
+# plot fianl tree
+rpart.plot(class_tree_prune_1SE)
+```
+
+<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-16-1.png" style="display: block; margin: auto;" />
 
 **(b) Perform boosting on the training data and report the variable
 importance. What is the test error rate?**

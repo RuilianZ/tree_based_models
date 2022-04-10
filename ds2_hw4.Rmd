@@ -241,8 +241,6 @@ RMSE(boost_pred, test_df$outstate)
 ## Question 2
 
 ```{r}
-set.seed(0409)
-
 # data import and cleaning
 data(OJ)
 
@@ -258,6 +256,8 @@ summary(OJ_df)
 ```
 
 ```{r}
+set.seed(0409)
+
 # data partition
 OJ_indexTrain = createDataPartition(y = OJ_df$purchase,
                                  p = 0.653,
@@ -269,6 +269,50 @@ OJ_test_df = OJ_df[-OJ_indexTrain, ]
 
 
 **(a) Build a classification tree using the training data, with Purchase as the response and the other variables as predictors. Use cross-validation to determine the tree size and create a plot of the final tree. Which tree size corresponds to the lowest cross-validation error? Is this the same as the tree size obtained using the 1 SE rule?**
+
+**Min MSE rule:**
+
+```{r}
+set.seed(0409)
+
+# fit classification model using rpart
+class_tree = rpart(purchase ~ . , 
+                   data = OJ_train_df,
+                   control = rpart.control(cp = 0))
+
+# tract cp table
+OJ_cp_table = printcp(class_tree)
+
+# extract min MSE
+OJ_min_MSE = which.min(OJ_cp_table[ , 4])
+
+# plot cross-validation error agiainst cp
+plotcp(class_tree)
+
+# obtain final tree using min MSE
+cp_MSE = OJ_cp_table[OJ_min_MSE, 1]
+
+class_tree_prune = prune(class_tree, cp = cp_MSE)
+
+# plot final tree
+rpart.plot(class_tree_prune)
+```
+
+**1 SE rule:**
+
+```{r}
+set.seed(0409)
+
+# obtain final tree using 1SE
+cp_1SE = OJ_cp_table[OJ_cp_table[ , 4] < OJ_cp_table[OJ_min_MSE, 4] + OJ_cp_table[OJ_min_MSE, 5], 1][1]
+
+class_tree_prune_1SE = prune(class_tree, 
+                             cp = cp_1SE)
+
+# plot fianl tree
+rpart.plot(class_tree_prune_1SE)
+```
+
 
 **(b) Perform boosting on the training data and report the variable importance. What is the test error rate?**
 
