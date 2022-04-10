@@ -97,6 +97,9 @@ reg_tree_prune = prune(reg_tree,
                        cp = reg_tree_cptable[min_err,1])
 
 #summary(reg_tree_prune) 
+
+# plot final tree
+rpart.plot(reg_tree_prune)
 ```
 
 ```{r}
@@ -364,4 +367,4 @@ mean(OJ_boost_pred != OJ_test_df$purchase) * 100
 ```
 
 * From the plot above, the most important variable is `loyal_ch`.  
-* The test error rate is `r mean(OJ_boost_pred != OJ_test_df$purchase) * 100``.
+* The test error rate is `r mean(OJ_boost_pred != OJ_test_df$purchase) * 100`.
