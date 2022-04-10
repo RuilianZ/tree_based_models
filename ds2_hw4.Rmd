@@ -23,8 +23,9 @@ library(ranger)
 library(gbm)
 
 knitr::opts_chunk$set(warning = FALSE, message = FALSE, 
-                      fig.align = "center", cache = TRUE, 
-                      fig.width = 6, fig.asp = 0.6, out.width = "90%")
+                      fig.align = "center", cache = TRUE) 
+                      #fig.width = 6, fig.asp = 0.6, out.width = "90%")
+
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 options(
   ggplot2.continuous.colour = "viridis",

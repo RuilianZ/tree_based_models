@@ -98,7 +98,7 @@ reg_tree_cptable = reg_tree$cptable
 plotcp(reg_tree)
 ```
 
-<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-3-1.png" width="90%" style="display: block; margin: auto;" />
+<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-3-1.png" style="display: block; margin: auto;" />
 
 ``` r
 # minimum cross_validation error
@@ -155,7 +155,7 @@ rf_fit$bestTune
 ggplot(rf_fit, highlight = TRUE)
 ```
 
-<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-5-1.png" width="90%" style="display: block; margin: auto;" />
+<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-5-1.png" style="display: block; margin: auto;" />
 
 ``` r
 set.seed(0409)
@@ -175,7 +175,7 @@ barplot(sort(ranger::importance(rf_per), decreasing = FALSE),
         col = colorRampPalette(colors = c("cyan", "blue"))(19))
 ```
 
-<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-6-1.png" width="90%" style="display: block; margin: auto;" />
+<img src="ds2_hw4_files/figure-gfm/unnamed-chunk-6-1.png" style="display: block; margin: auto;" />
 
 ``` r
 # make prediction
