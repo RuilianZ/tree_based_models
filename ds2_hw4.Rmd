@@ -2,8 +2,14 @@
 title: "Data Science II Homework 4"
 author: "Roxy Zhang"
 date: "4/1/2022"
-output: github_document
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: yes
+    toc_depth: 3
 ---
+
+\newpage
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -272,6 +278,8 @@ OJ_test_df = OJ_df[-OJ_indexTrain, ]
 
 **Min MSE rule:**
 
+The tree with depth = 7 and 14 terminal nodes corresponds to the lowest cross-validation error.
+
 ```{r}
 set.seed(0409)
 
@@ -300,6 +308,8 @@ rpart.plot(class_tree_prune)
 
 **1 SE rule:**
 
+The tree with depth = 4 and 5 terminal nodes corresponds to the lowest cross-validation error, which is smaller than the tree obtained using min MSE.
+
 ```{r}
 set.seed(0409)
 
@@ -317,6 +327,41 @@ rpart.plot(class_tree_prune_1SE)
 **(b) Perform boosting on the training data and report the variable importance. What is the test error rate?**
 
 ```{r}
+set.seed(0409)
 
+ctrl_class = trainControl(method = "repeatedcv",
+                          classProbs = TRUE,
+                          summaryFunction = twoClassSummary)
+
+# fit adaboost model for classification
+OJ_boost_grid = expand.grid(n.trees = seq(1, 5000, 500),
+                            interaction.depth = 1:6,
+                            shrinkage = c(0.001, 0.003, 0.005),
+                            n.minobsinnode = 1)
+
+OJ_boost = train(purchase ~ .,
+                 data = OJ_train_df,
+                 method = "gbm",
+                 tuneGrid = OJ_boost_grid,
+                 trControl = ctrl_class,
+                 distribution = "adaboost",
+                 metric = "ROC",
+                 verbose = FALSE)
+
+ggplot(OJ_boost, highlight = TRUE)
 ```
 
+```{r}
+set.seed(0409)
+
+# variable importance plot
+summary(OJ_boost$finalModel, las = 2, cBars = 19, cex.names = 0.6)
+
+# test error rate
+OJ_boost_pred = predict(OJ_boost, newdata = OJ_test_df)
+
+mean(OJ_boost_pred != OJ_test_df$purchase) * 100
+```
+
+* From the plot above, the most important variable is `loyal_ch`.  
+* The test error rate is `r mean(OJ_boost_pred != OJ_test_df$purchase) * 100``.
